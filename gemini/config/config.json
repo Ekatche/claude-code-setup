@@ -1,0 +1,13 @@
+{
+  "userSettings": {
+    "globalPermissionGrants": {
+      "allow": [
+        "read_file(${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skill-sources/micro-dev/SKILL.md)",
+        "read_file(${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skill-sources/micro-dev/references/PLAN_TEMPLATE.md)",
+        "read_file(${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skill-sources/micro-dev/references/EXAMPLES.md)",
+        "read_file(${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skill-sources/executing-micro-plans/SKILL.md)",
+        "read_file(${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skill-sources/executing-micro-plans/references/HARNESS_MAP.md)"
+      ]
+    }
+  }
+}
