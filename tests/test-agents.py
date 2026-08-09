@@ -10,7 +10,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AGENTS = ROOT / "claude" / "agents"
-EXPECTED = 11
+EXPECTED = 13
 
 def parse_frontmatter(text):
     if not text.startswith("---\n"):
