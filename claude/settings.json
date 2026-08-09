@@ -1,0 +1,244 @@
+{
+  "skillListingMaxDescChars": 400,
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "TOKEN_SAVIOR_PROFILE": "optimized",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "250000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+  },
+  "permissions": {
+    "allow": [
+      "Add allow permission rule",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(rtk lint *)",
+      "Skill(andrej-karpathy-skills:karpathy-guidelines)",
+      "Skill(andrej-karpathy-skills:karpathy-guidelines:*)",
+      "Bash(git log *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git -C *)",
+      "Bash(./node_modules/.bin/tsc --noEmit *)",
+      "Bash(make check *)",
+      "Bash(sed -n *)",
+      "mcp__context7__query-docs",
+      "mcp__code-review-graph__semantic_search_nodes_tool",
+      "mcp__render__list_logs",
+      "Bash(mgrep --web \"document layout detection 2026 reading order end-to-end\")",
+      "WebSearch",
+      "WebFetch(domain:arxiv.org)",
+      "Bash(mgrep --web \"RT-DETR document layout real-time analysis\")",
+      "Bash(mgrep --web \"document layout visual detection OCR vs multimodal 2026\")",
+      "WebFetch(domain:clarion.ai)",
+      "WebFetch(domain:parsli.co)",
+      "Bash(rtk curl *)",
+      "Bash(mgrep --web \"Docling layout detection reading order 2024 2025\")",
+      "Bash(pdftotext /tmp/rt_doclayout.pdf -)",
+      "Bash(mgrep --web \"pure visual detection document layout reading order before 2025\")",
+      "WebFetch(domain:www.microsoft.com)",
+      "Bash(mgrep --web \"LayoutLMv3 Donut multimodal document understanding 2023 2024 2025 reading order\")",
+      "Bash(cat)",
+      "Bash(bash /tmp/research_query.sh)",
+      "mcp__context7__resolve-library-id",
+      "Bash(log show *)",
+      "mcp__code-review-graph__query_graph_tool"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Grep|WebFetch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/dump-size-guard.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/security-scan-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/mgrep-quota-detect.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/block-grep-search.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/large-read-warning.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/websearch-priority-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Glob|Grep|WebSearch|WebFetch|mcp__code-review-graph__.*|mcp__context7__.*|mcp__plugin_context7_context7__.*|mcp__token-savior__.*|mcp__plugin_context-mode_context-mode__.*|mcp__plugin_semgrep_guardian__.*|mcp__semgrep__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/track-search.sh\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/inject-feature-docs.sh\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/model-triage-audit.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'MANDATORY discipline skills — invoke WHEN the trigger applies: (1) karpathy-guidelines BEFORE writing, editing, or refactoring any code (prevents overcomplication, hidden assumptions, untested changes). (2) superpowers:verification-before-completion BEFORE claiming any work is complete, fixed, or passing (evidence before assertions — run the verify command, check the output). Both are non-negotiable when their trigger matches.'"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/context-mode-cache-heal.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/post-compact-pointers.sh\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/search-rule-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/compact-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "mgrep@Mixedbread-Grep": true,
+    "security-guidance@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "mcp-server-dev@claude-plugins-official": true,
+    "tavily@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "context-mode@context-mode": true,
+    "caveman@caveman": true
+  },
+  "extraKnownMarketplaces": {
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      }
+    }
+  },
+  "language": "french",
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "totalTokensReminder": "countdown",
+  "agentPushNotifEnabled": true,
+  "model": "opus"
+}
