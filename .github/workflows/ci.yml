@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: scrub-check sur tout le repo
+        run: |
+          ./scrub-check.sh claude gemini manifest.json README.md PREREQUISITES.md \
+            tests/test-scrub-check.sh tests/test-hooks-claude.sh \
+            tests/test-hooks-gemini.sh tests/test-agents.py tests/test-skills-gemini.py
+
+      - name: Test de scrub-check lui-même
+        run: bash tests/test-scrub-check.sh
+
+      - name: Hooks Claude
+        run: bash tests/test-hooks-claude.sh
+
+      - name: Hooks agy
+        run: bash tests/test-hooks-gemini.sh
+
+      - name: Agents
+        run: python3 tests/test-agents.py
+
+      - name: Skills agy
+        run: python3 tests/test-skills-gemini.py

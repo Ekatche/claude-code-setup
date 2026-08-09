@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Refuse le commit si une donnée privée passe. Activer une fois par clone :
+#   git config core.hooksPath .githooks
+set -euo pipefail
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -v '^tests/fixtures/' || true)
+[ -z "$files" ] && exit 0
+# shellcheck disable=SC2086
+exec ./scrub-check.sh $files
