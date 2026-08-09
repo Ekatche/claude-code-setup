@@ -1,0 +1,15 @@
+# Motifs de scrubbing propres à une machine — jamais commités
+scrub-patterns.local
+
+# Config MCP réelle : porte des clés API en clair
+gemini/config/mcp_config.json
+
+# État runtime, jamais versionné
+claude/state/
+claude/projects/
+claude/todos/
+claude/history.jsonl
+gemini/config/projects/
+
+# OS
+.DS_Store
