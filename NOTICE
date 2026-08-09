@@ -15,8 +15,9 @@ other and the agent descriptions are shared by more than 200 repositories.
 Both are MIT licensed, so both are credited here. The files have since been
 substantially rewritten for this configuration.
 
-Two further agent files, javascript-pro.md and typescript-pro.md, are adapted
-from:
+Six further agent files — javascript-pro.md, typescript-pro.md,
+test-automator.md, performance-engineer.md, mcp-developer.md, and
+ux-researcher.md — are adapted from:
 
   VoltAgent/awesome-claude-code-subagents
   MIT License
