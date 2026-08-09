@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          { "type": "command", "command": "${GEMINI_DIR:-$HOME/.gemini}/hooks/rtk-hook-gemini.sh" },
+          { "type": "command", "command": "bash \"${GEMINI_DIR:-$HOME/.gemini}/hooks/block-grep-search-gemini.sh\"" }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"${GEMINI_DIR:-$HOME/.gemini}/hooks/search-rule-reminder-gemini.sh\"" }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          { "type": "command", "command": "bash \"${GEMINI_DIR:-$HOME/.gemini}/hooks/track-search-gemini.sh\"" },
+          { "type": "command", "command": "bash \"${GEMINI_DIR:-$HOME/.gemini}/hooks/mgrep-quota-detect-gemini.sh\"" }
+        ]
+      }
+    ]
+  }
+}
