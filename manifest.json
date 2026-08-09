@@ -1,0 +1,46 @@
+{
+  "marketplaces": [
+    { "name": "claude-plugins-official", "repo": "anthropics/claude-plugins-official" },
+    { "name": "Mixedbread-Grep", "repo": "mixedbread-ai/mgrep" },
+    { "name": "karpathy-skills", "repo": "multica-ai/andrej-karpathy-skills" },
+    { "name": "context-mode", "repo": "mksglu/context-mode" },
+    { "name": "caveman", "repo": "JuliusBrussee/caveman" }
+  ],
+  "plugins": [
+    "mgrep@Mixedbread-Grep",
+    "security-guidance@claude-plugins-official",
+    "code-review@claude-plugins-official",
+    "frontend-design@claude-plugins-official",
+    "supabase@claude-plugins-official",
+    "feature-dev@claude-plugins-official",
+    "code-simplifier@claude-plugins-official",
+    "claude-code-setup@claude-plugins-official",
+    "claude-md-management@claude-plugins-official",
+    "skill-creator@claude-plugins-official",
+    "semgrep@claude-plugins-official",
+    "superpowers@claude-plugins-official",
+    "mcp-server-dev@claude-plugins-official",
+    "tavily@claude-plugins-official",
+    "firecrawl@claude-plugins-official",
+    "andrej-karpathy-skills@karpathy-skills",
+    "context-mode@context-mode",
+    "caveman@caveman"
+  ],
+  "python": {
+    "venv": "$HOME/.local/token-savior-venv",
+    "packages": ["token-savior-recall==4.4.1"]
+  },
+  "cli": [
+    { "name": "rtk", "check": "rtk --version", "note": "Rust Token Killer — proxy CLI, réécrit cat/ls/git/grep" },
+    { "name": "mgrep", "check": "mgrep --version", "note": "recherche sémantique, compte Mixedbread requis" },
+    { "name": "ast-grep", "check": "ast-grep --version", "note": "recherche structurelle AST, binaire aussi appelé sg" },
+    { "name": "firecrawl", "check": "firecrawl --status", "note": "scraping, compte requis" },
+    { "name": "tvly", "check": "tvly --version", "note": "Tavily, compte requis" },
+    { "name": "gh", "check": "gh --version", "note": "GitHub CLI" },
+    { "name": "jq", "check": "jq --version", "note": "requis par tous les hooks" },
+    { "name": "agy", "check": "agy --help", "note": "Antigravity CLI — installé avec l'application" }
+  ],
+  "mcpServers": {
+    "note": "Les serveurs MCP user-scope sont déclarés hors de ce repo. Voir PREREQUISITES.md : chaque serveur demande un compte et une clé personnelle."
+  }
+}
