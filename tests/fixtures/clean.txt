@@ -1,0 +1,4 @@
+name: task-decomposition-expert
+${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/x.sh
+Le risque: une clé de type sk- ou ghp_ commitée.
+un chemin sous /Volumes est refusé

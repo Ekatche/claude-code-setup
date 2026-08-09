@@ -1,0 +1,11 @@
+/Users/someone/.claude/hooks/x.sh
+/home/someone/.config/y
+sk-AAAAAAAAAAAAAAAAAAAA
+ghp_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+AKIACCCCCCCCCCCCCCCC
+fc-dddddddddddddddddddddddddddddddd
+tvly-dev-EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+"oauthAccount": {}
+"userID": "ffffffff"
+"machineID": "gggggggg"
+/Volumes/somedisk/SomeProject

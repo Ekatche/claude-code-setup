@@ -1,0 +1,11 @@
+# Motifs privés propres à une machine. Une expression régulière ERE par ligne.
+# Copier vers scrub-patterns.local (gitignoré) et remplir.
+#
+# Ce fichier ne contient PAS de secrets : il contient les motifs à interdire.
+# Ces motifs sont eux-mêmes sensibles — ce sont les noms de vos projets — d'où
+# le gitignore sur la version réelle.
+#
+# Exemples de ce qu'on y met :
+#   votre-nom-utilisateur
+#   NomDeProjetPrive
+#   nom-de-votre-machine
