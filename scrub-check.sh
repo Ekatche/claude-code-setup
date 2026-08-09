@@ -34,9 +34,18 @@ volume-externe|/Volumes/
 
 LOCAL_FILE="$(dirname "$0")/scrub-patterns.local"
 
+# Ce script contient forcément ses propres motifs en clair : se scanner
+# lui-même le fait échouer à chaque commit qui le touche. On s'exclut par
+# CHEMIN RÉSOLU, jamais par nom de fichier — sinon n'importe quel fichier
+# baptisé scrub-check.sh deviendrait une zone franche.
+SELF=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
+
 violations=0
 scan_file() {
   local f="$1"
+  local abs
+  abs=$(cd "$(dirname "$f")" 2>/dev/null && pwd)/$(basename "$f")
+  [ "$abs" = "$SELF" ] && return 0
   while IFS='|' read -r name re; do
     [ -z "$name" ] && continue
     while IFS=: read -r lineno _; do
@@ -62,6 +71,17 @@ scan_file() {
 if [ "$#" -eq 0 ]; then
   echo "usage: scrub-check.sh <fichier|répertoire>..." >&2
   exit 2
+fi
+
+# Sans scrub-patterns.local, seuls les motifs génériques tournent : les noms de
+# projets et de clients privés ne sont PAS couverts. Le dire fort. Un vert
+# silencieux sur un contrôle à moitié désactivé est pire que pas de contrôle —
+# il fait croire qu'une vérification a eu lieu. C'est exactement ce qui a laissé
+# passer un nom de projet privé dans quatre fichiers.
+if [ ! -f "$LOCAL_FILE" ]; then
+  echo "scrub-check: AVERTISSEMENT — scrub-patterns.local absent." >&2
+  echo "  Motifs génériques seuls. Noms de projets/clients privés NON vérifiés." >&2
+  echo "  Copier scrub-patterns.local.example et le remplir." >&2
 fi
 
 for target in "$@"; do

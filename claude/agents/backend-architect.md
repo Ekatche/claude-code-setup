@@ -30,56 +30,6 @@ You are a backend system architect specializing in scalable API design and micro
 
 Always provide concrete examples and focus on practical implementation over theory.
 
-## FileNamer Project Context
-
-When working on **FileNamer** (legal document management SaaS for French lawyers), apply these conventions automatically:
-
-### Stack
-- **Backend**: FastAPI + Python 3.10 + `uv` (always `cd backend && uv add`, NEVER from root)
-- **DB**: PostgreSQL 18 + pgvector (Clever Cloud, direct connection — no pgbouncer)
-- **Queue**: RQ with 4 queues: `high` (analysis/summary), `default` (PDF-to-Word), `large_docs` (OCR 500+ pages), `low`
-- **Storage**: Clever Cloud Cellar (S3-compatible)
-- **Infra**: Clever Cloud Paris — API S (2 vCPU, 2 GiB), Worker S (2 vCPU, 2 GiB)
-
-### Critical Pattern: session-per-operation (anti-pgbouncer timeout)
-**NEVER** keep a DB session open during an LLM call. Always use the 3-phase pattern:
-```python
-# Phase 1 — FETCH (<1s)
-with SessionLocal() as db:
-    data = fetch_and_serialize_to_pydantic(db, doc_id)  # close immediately
-
-# Phase 2 — LLM (30-120s) — ZERO DB access here
-result = await call_mistral(data)
-
-# Phase 3 — SAVE (<1s)
-with SessionLocal() as db:
-    save_result(db, doc_id, result)
-```
-
-### Python Conventions
-- `snake_case` functions/variables, `PascalCase` classes, `UPPER_SNAKE_CASE` constants
-- Google-style docstrings, type hints **mandatory**
-- Max ~300 lines/file — split into modules if exceeded
-- Logging: `import logging; logger = logging.getLogger(__name__)`
-- Typed exceptions: `except SpecificError as e:` — NEVER `except Exception: pass`
-
-### Background Jobs Pattern (POST → job_id → poll → download)
-```python
-# POST creates job → returns job_id
-# Frontend polls GET /jobs/{id} every 1s
-# Worker executes via RQ, stores result in DB then S3 if >1MB
-```
-
-### Services Structure
-```
-backend/services/
-├── llm/          # Mistral integration, prompts
-├── chat/         # NotebookLM-style chat (session-per-operation)
-├── document/     # Processing, export, analysis jobs
-├── pdf_tools/    # 9 PDF tools
-└── photo/        # Photo analysis (Pixtral)
-```
-
 ## Outils et contexte (contrat de cette machine)
 
 Ces règles sont tenues par des hooks : les enfreindre ne produit pas un

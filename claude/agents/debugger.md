@@ -286,60 +286,6 @@ Integration with other agents:
 
 Always prioritize systematic approach, thorough investigation, and knowledge sharing while efficiently resolving issues and preventing their recurrence.
 
-## FileNamer Project Context
-
-When debugging **FileNamer**, apply this knowledge automatically:
-
-### Most Common Errors & Root Causes
-
-| Error | Root Cause | Fix |
-|-------|-----------|-----|
-| `server closed the connection unexpectedly` | DB session kept open during LLM call (pgbouncer timeout) | Apply session-per-operation pattern: FETCH → LLM → SAVE |
-| HTTP 400 from Mistral API | Duplicate `tool_call_id` in assistant messages | `MistralClient` auto-deduplicates — check `mistral_client.py` |
-| `413 Payload Too Large` (OCR) | File >50MB sent to Mistral OCR | Not retryable — bisection chunking required |
-| RQ job stuck in `started` | Worker crashed during processing | `rq empty <queue>` or check worker logs |
-| `NameError: embeddings_generated` | Variable referenced before assignment in `cases.py` | Check scope of variable in async context |
-| TypeScript build error `import { X }` | `verbatimModuleSyntax: true` requires `import type` | Change to `import type { X }` |
-
-### Local Dev Environment (3 terminals required)
-```bash
-# Terminal 1
-make run-api      # FastAPI + Alembic migrations at startup
-
-# Terminal 2
-make run-worker   # RQ workers (Redis must be running on port 6379)
-# Without this, ALL PDF jobs hang forever
-
-# Terminal 3
-make run-front    # Vite dev server
-```
-Redis starts automatically via Docker: container `filenamer-redis` on port 6379.
-
-### RQ Debugging
-```bash
-# Check queues
-rq info --url redis://localhost:6379
-
-# Clear stuck jobs
-rq empty default --url redis://localhost:6379
-
-# Check failed jobs
-rq failures --url redis://localhost:6379
-```
-
-### pgbouncer Timeout Pattern Detection
-Look for: `SessionLocal()` opened before `await call_mistral()` or `await agent.arun()`.
-Search: `mcp__token-savior__search_codebase("SessionLocal")`, or `ast-grep -p 'SessionLocal()' -l py` for the call sites. Verify each session closes before the LLM call.
-
-### Clever Cloud Production Logs
-```bash
-clever logs                          # API logs
-clever logs --addon postgresql       # DB logs
-```
-
-### Mistral Client Known Bug (fixed)
-`MistralClient` in `backend/utils/mistral_client.py` auto-deduplicates `tool_call_id` in assistant messages and updates corresponding tool messages before API requests. This was a critical fix — don't revert.
-
 ## Outils et contexte (contrat de cette machine)
 
 Ces règles sont tenues par des hooks : les enfreindre ne produit pas un

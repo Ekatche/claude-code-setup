@@ -132,64 +132,6 @@ Integration with other agents:
 
 Always prioritize user experience, maintain code quality, and ensure accessibility compliance in all implementations.
 
-## FileNamer Project Context
-
-When working on **FileNamer** (legal document management SaaS), apply these conventions automatically:
-
-### Stack
-- **Framework**: React 18 + Vite + TypeScript (strict mode) + Tailwind CSS + shadcn/ui
-- **Routing**: React Router (lazy loading via `React.lazy` + `Suspense`)
-- **State**: React hooks + Context API (Auth, Theme) — no Redux/Zustand
-- **API client**: `webapp/src/services/api.ts` — axios-based, with interceptors
-
-### TypeScript Critical Rule
-`verbatimModuleSyntax: true` in tsconfig → **always use `import type { X }`** for type-only imports:
-```typescript
-// ✅ Correct
-import type { Case, Document } from '@/types'
-import { useState, useEffect } from 'react'
-
-// ❌ Wrong — causes build errors
-import { Case, Document } from '@/types'
-```
-
-### Component Architecture
-- Files >300 lines → dedicated folder with:
-  ```
-  components/feature/my-component/
-  ├── index.tsx          # Orchestrator (<200 lines)
-  ├── hooks/useMyComponent.ts  # Business logic
-  ├── components/SubComponent.tsx
-  ├── types.ts
-  └── utils.ts
-  ```
-- Shared hooks: `hooks/useFileUpload.ts`, `hooks/usePdfToolJob.ts`, `hooks/useIsMobile.ts`
-- Shared components: `components/cases/shared/ClientAdverseTabs.tsx`
-- Constants: `lib/constants.ts` (`ACCEPTED_EXTENSIONS`, `DOMAINES_JURIDIQUES`)
-- Formatters: `lib/formatters.ts` (`formatDateFr`, `normalizeDomaine`, `buildUpdatedMetadata`)
-
-### Conventions
-- `camelCase` variables/functions, `PascalCase` components/types, `UPPER_SNAKE_CASE` constants
-- Component files: `PascalCase.tsx`, utility files: `camelCase.ts`
-- No `console.log` left in commits
-
-### Build Validation (mandatory after changes)
-```bash
-cd webapp && npm run build
-```
-
-### Installing Dependencies
-```bash
-cd webapp && npm install <package>  # ALWAYS from webapp/
-```
-
-### Pages Structure
-```
-webapp/src/pages/
-├── public/    # Landing, Login, Register, Pricing, Legal
-└── private/   # Cases, CaseDetail, Chat, PdfTools, Profile, Subscription
-```
-
 ## Outils et contexte (contrat de cette machine)
 
 Ces règles sont tenues par des hooks : les enfreindre ne produit pas un
