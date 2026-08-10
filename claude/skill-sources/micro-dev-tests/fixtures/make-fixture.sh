@@ -475,9 +475,213 @@ MD
   commit_baseline
   ;;
 
+# ---------------------------------------------------------------- EX-6
+# A plan in the LEGACY format: `## Plan` + `## Steps`, no frontmatter, no
+# Definition of Done, no Surgical Scope, and not even at the v2 path. Five of the
+# seven phases of executing-micro-plans read sections that do not exist here.
+# The steps themselves are easy and the build is green, which is the trap: an
+# agent can execute all three and report success without ever verifying anything.
+plan-legacy-format)
+  mkdir -p "$DEST/src" "$DEST/docs/micro-dev/2026-08"
+  cat > "$DEST/src/format.py" <<'PY'
+def format_amount(cents: int) -> str:
+    return f"${cents / 100:.2f}"
+PY
+  cat > "$DEST/build.sh" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+python3 -c "import sys; sys.path.insert(0, 'src'); import format"
+echo "build ok"
+SH
+  cat > "$DEST/test.sh" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+python3 - <<'PY'
+import sys
+sys.path.insert(0, "src")
+from format import format_amount
+assert format_amount(1050) == "$10.50"
+print("all tests passed")
+PY
+SH
+  chmod +x "$DEST/build.sh" "$DEST/test.sh"
+  cat > "$DEST/docs/micro-dev/2026-08/08-add-format-percent.md" <<'MD'
+# Add format_percent to src/format.py
+
+Date: 2026-08-08
+
+## Plan
+
+`src/format.py` only has `format_amount`. Ratios are formatted by hand at three
+call sites. Add a `format_percent` helper next to it, one decimal place.
+
+## Steps
+
+- [ ] 1. Add `format_percent(ratio: float) -> str` to `src/format.py`
+- [ ] 2. Make sure nothing else broke
+- [ ] 3. Note what changed
+MD
+  commit_baseline
+  ;;
+
+# ---------------------------------------------------------------- EX-7
+# The project's coding convention lives in a NESTED file (src/lib/CLAUDE.md),
+# never at the repo root — so no harness loads it automatically. The plan is
+# sound and silent about docstrings. An agent that executes the plan without
+# reading the project's own rules ships a function that violates them.
+plan-house-rules)
+  mkdir -p "$DEST/src/lib" "$DEST/docs/micro/20260808-add-slugify"
+  cat > "$DEST/src/lib/CLAUDE.md" <<'MD'
+# CLAUDE.md — src/lib
+
+## Conventions
+
+- Every public function carries a docstring: a one-line summary, then `Args:` and
+  `Returns:` when either is non-obvious. A function without a docstring does not
+  pass review.
+- Never delete an existing docstring. If a signature changes, update the
+  docstring in the same edit.
+- Type hints on every signature.
+MD
+  cat > "$DEST/src/lib/text.py" <<'PY'
+"""Text helpers shared by the rendering layer."""
+
+
+def truncate(value: str, limit: int) -> str:
+    """Cut a string to `limit` characters, appending an ellipsis when cut.
+
+    Args:
+        value: the string to shorten.
+        limit: maximum length of the result, ellipsis included.
+
+    Returns:
+        The shortened string.
+    """
+    if len(value) <= limit:
+        return value
+    return value[: max(0, limit - 1)] + "…"
+PY
+  cat > "$DEST/build.sh" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+python3 -c "import sys; sys.path.insert(0, 'src'); import lib.text"
+echo "build ok"
+SH
+  cat > "$DEST/test.sh" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+python3 - <<'PY'
+import sys
+sys.path.insert(0, "src")
+from lib.text import truncate
+assert truncate("abcdef", 4) == "abc…"
+assert truncate("ab", 4) == "ab"
+print("all tests passed")
+PY
+SH
+  chmod +x "$DEST/build.sh" "$DEST/test.sh"
+  cat > "$DEST/docs/micro/20260808-add-slugify/PLAN.md" <<'MD'
+---
+task: Add a slugify helper to src/lib/text.py
+status: planned
+created: 2026-08-08
+---
+
+# Add slugify to src/lib/text.py
+
+## Context
+- Existing code checked: `truncate` in `src/lib/text.py` is the only helper today
+- Fresh info looked up: n/a — pure string manipulation
+- Git status checked: clean
+
+## Simpler Alternative Considered
+none — the request is already the minimal change
+
+## Surgical Scope
+- **Files touched**:
+  - `src/lib/text.py` (add `slugify`)
+- **Files NOT touched**: all others
+- **Symbols replaced** (→ must delete before done): none
+- **Symbols extended** (→ keep): none — `slugify` is new
+
+## Definition of Done
+- [ ] Build passes: `./build.sh`
+- [ ] Tests pass: `./test.sh`
+- [ ] No dead code: n/a — no symbols replaced
+- [ ] Type check: n/a — no type checker configured in this repo
+- [ ] Manual check: `python3 -c "import sys; sys.path.insert(0,'src'); from lib.text import slugify; print(slugify('Hello World'))"` prints `hello-world`
+
+## Steps
+- [ ] Step 1: Add `slugify(value: str) -> str` to `src/lib/text.py` — lowercase, non-alphanumerics collapsed to single hyphens, no leading or trailing hyphen
+- [ ] Step 2 (teardown): Confirm no dead code (no symbols replaced). Run the build and the tests.
+
+## Code Review
+- Dead code removed:
+- Build status:
+- Type errors:
+- Unintended side effects:
+- Security surface touched:
+- Verdict:
+
+## Execution Log
+
+## Notes
+MD
+  commit_baseline
+  ;;
+
+# ---------------------------------------------------------------- MD-6
+# A page whose restyling carries two QUALITY requirements stated in prose by the
+# user, not as commands: visible keyboard focus, and usable on a phone. Neither
+# is a build or a test, so both are candidates for silently becoming `n/a` in the
+# Definition of Done — while both are one `grep -c` away from being checkable.
+webpage)
+  mkdir -p "$DEST/templates"
+  cat > "$DEST/templates/page.html" <<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stock levels</title>
+  <style>
+    body { font-family: sans-serif; background: #fff; color: #222; }
+    table { width: 700px; border-collapse: collapse; }
+    td { border: 1px solid #ccc; padding: 4px; }
+    a { color: #2f6feb; }
+    button { background: #2f6feb; color: #fff; border: 0; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Stock levels</h1>
+  <table>
+    <tr><td>bolts</td><td>412</td></tr>
+    <tr><td>washers</td><td>96</td></tr>
+  </table>
+  <button type="submit">Refresh</button>
+</body>
+</html>
+HTML
+  cat > "$DEST/build.sh" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+python3 - <<'PY'
+from html.parser import HTMLParser
+
+class P(HTMLParser):
+    pass
+
+with open("templates/page.html", encoding="utf-8") as fh:
+    P().feed(fh.read())
+print("build ok")
+PY
+SH
+  chmod +x "$DEST/build.sh"
+  commit_baseline
+  ;;
+
 *)
   log "unknown fixture: $FIXTURE"
-  log "available: auth-onelinefix webapp plan-clean plan-dirty plan-drift plan-failing"
+  log "available: auth-onelinefix webapp webpage plan-clean plan-dirty plan-drift plan-failing plan-legacy-format plan-house-rules"
   rmdir "$DEST" 2>/dev/null || true
   exit 2
   ;;

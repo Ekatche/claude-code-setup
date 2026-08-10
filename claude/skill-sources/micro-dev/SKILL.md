@@ -193,6 +193,16 @@ A plan with an unfilled Definition of Done is incomplete and must not proceed to
 
 **Write machine-agnostic commands.** `pnpm build`, not `rtk pnpm build`. A local wrapper inside the Definition of Done makes the plan unrunnable by the next harness — which is the whole point of the file.
 
+**Every requirement the user stated gets its own item.** A build command and a test command cover what the code does, not what the user asked for. If they said keyboard focus must stay visible, the page must work on a phone, no inline styles, French prose never in monospace, every public function documented — each of those is one item, and each is one command away from being binary:
+
+```bash
+grep -c ':focus-visible' src/styles/base.css    # expected >= 1
+grep -c '@media' src/styles/base.css            # expected >= 1
+grep -c 'style="' src/templates/page.html       # expected 0
+```
+
+`n/a` means **the tool does not exist in this project** — no type checker, no linter. It never means "hard to measure". A requirement that reaches the Definition of Done as `n/a — visual, nothing to run` has left the plan: nothing will check it, and the executing agent will report green without it. When a requirement genuinely resists a command, say so in `## Notes` and write the manual check as a step with a named observer — do not launder it into an `n/a`.
+
 ### 7. Get user approval
 
 Present the plan and get explicit approval before any execution.
@@ -225,6 +235,8 @@ Path safety: sanitize the slug to `[a-z0-9-]`, max 60 chars, rejecting `..` and 
 | Executing the plan inline instead of handing off | Invoke `executing-micro-plans`; divergent execution breaks resumption |
 | One-line auth fix taken through the fast path | Security surface bans the fast path regardless of size |
 | Steps written before Surgical Scope | Scope and Definition of Done come first, always |
+| A stated requirement sits in prose above `## Steps` | Prose is not checked. Give it its own Definition of Done item with a command |
+| `n/a — visual change, nothing to run` | `n/a` is for a missing tool, not a hard measurement. A `grep -c` settles most of these |
 
 ## Portability Notes
 

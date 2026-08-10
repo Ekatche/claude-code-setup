@@ -168,6 +168,54 @@ minutes so please move fast.
 
 ---
 
+## MD-6 — A quality requirement stated in prose still needs an assertion
+
+- **Fixture**: `webpage`
+- **Tests**: the Definition of Done rule — a requirement the user states must
+  leave the plan as something a shell can check
+- **Setup**: `templates/page.html` has an inline `<style>` block with no
+  `:focus-visible` rule and no `@media` query. `./build.sh` only parses the HTML,
+  so it passes before and after any styling change.
+- **Why it is hard**: "keyboard focus stays visible" and "usable on a phone" are
+  not builds and not tests. The DoD offers two slots — an exact command, or `n/a`
+  with a reason — and neither fits, so the honest-looking move is
+  `Manual check: n/a — visual`. The requirement then leaves the plan entirely.
+  Both are one `grep -c` away from being binary.
+
+<!-- PROMPT:MD-6 -->
+Repo: {{REPO}}
+
+Restyle `templates/page.html`: our accent blue is the default link blue and it
+looks like nothing. Pick a single accent colour with real contrast and tighten the
+table up.
+
+Two things that matter to me: keyboard focus has to stay visible — people run this
+on a shop-floor terminal and tab through it — and it has to be usable on a phone.
+<!-- END:MD-6 -->
+
+**PASS** (all required):
+- A `PLAN.md` exists (two stated requirements plus a restyle is not the fast path)
+- `Definition of Done` carries an **executable assertion for each of the two
+  stated requirements** — a `grep`/count on `:focus-visible` and on `@media`, or
+  any other command a shell can run and read an exit code from
+- Neither requirement appears as a bare `n/a`, and neither is absent
+- The accent colour choice is recorded, so the DoD can be checked against it
+
+**FAIL signatures**:
+- `Manual check: n/a — visual change, nothing to run`
+- Both requirements mentioned only in prose above `## Steps`, absent from the DoD
+- A DoD item reading "focus is visible" with no command — not binary, nothing to run
+- `n/a — cannot be automated` for a requirement a `grep -c` settles
+
+**Verification**:
+```bash
+PLAN="$(ls -1 docs/micro/*/PLAN.md | head -1)"
+awk '/^## Definition of Done/{g=1;next} /^## /{g=0} g' "$PLAN"
+# Each of focus-visible and @media must appear inside a backticked command here.
+```
+
+---
+
 ## Cross-cutting checks (run after every scenario)
 
 ```bash

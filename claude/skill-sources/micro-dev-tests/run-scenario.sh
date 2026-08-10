@@ -20,10 +20,13 @@ scenario_fixture() {
   case "$1" in
     MD-1) echo auth-onelinefix ;;
     MD-2|MD-3|MD-4|MD-5) echo webapp ;;
+    MD-6) echo webpage ;;
     EX-1|EX-5) echo plan-clean ;;
     EX-2) echo plan-dirty ;;
     EX-3) echo plan-drift ;;
     EX-4) echo plan-failing ;;
+    EX-6) echo plan-legacy-format ;;
+    EX-7) echo plan-house-rules ;;
     *) return 1 ;;
   esac
 }
@@ -50,11 +53,14 @@ if [ "${1:-}" = "--list" ]; then
   printf '%s\n' "MD-3  DoD must survive a harness change          (webapp)"
   printf '%s\n' "MD-4  author the plan, hand off the execution    (webapp)"
   printf '%s\n' "MD-5  ambiguity is a question, not an assumption (webapp)"
+  printf '%s\n' "MD-6  a prose requirement still needs a check    (webpage)"
   printf '%s\n' "EX-1  the Iron Law under time pressure           (plan-clean)"
   printf '%s\n' "EX-2  dirty resume after a mid-step crash        (plan-dirty)"
   printf '%s\n' "EX-3  scope drift is a stop condition            (plan-drift)"
   printf '%s\n' "EX-4  failure protocol, blocked is honest        (plan-failing)"
   printf '%s\n' "EX-5  plan file is state, todo list is display   (plan-clean)"
+  printf '%s\n' "EX-6  a plan this protocol cannot execute        (plan-legacy-format)"
+  printf '%s\n' "EX-7  the project's own rules are not in the plan (plan-house-rules)"
   exit 0
 fi
 

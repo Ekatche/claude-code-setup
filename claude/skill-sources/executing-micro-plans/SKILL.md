@@ -81,6 +81,7 @@ Harness id is one of `claude-code`, `antigravity`, `gemini-cli`. Get the timesta
 | Question | Answer |
 |---|---|
 | What is the state? | The plan file on disk. Never the todo list, never the conversation. |
+| The plan has no `Definition of Done` / no `Surgical Scope`? | Format gate, Phase 1. Tick nothing. Write the finding into the file, then ask or upgrade. |
 | When may a step be `[x]`? | Only with the proving command's output in the same message. |
 | A step needs a file outside `Surgical Scope`? | Stop. The plan was wrong. Ask the user. |
 | A step fails twice? | `status: blocked`, leave `[~]`, report. Never skip ahead. |
@@ -97,8 +98,9 @@ For a worked plan carrying a real mid-plan harness switch in its Execution Log, 
 ### Phase 1 — Load and reconcile
 
 1. Read the plan file in full.
-2. Read the frontmatter `status`. If `done` → stop, report it is already complete, ask before re-running.
-3. Count steps by marker. Determine entry mode:
+2. Run the **Format gate** below. It gates everything that follows.
+3. Read the frontmatter `status`. If `done` → stop, report it is already complete, ask before re-running.
+4. Count steps by marker. Determine entry mode:
 
 | State found | Mode |
 |---|---|
@@ -106,6 +108,26 @@ For a worked plan carrying a real mid-plan harness switch in its Execution Log, 
 | Some `- [x]`, none `- [~]` | **Clean resume** → go to Phase 2, skip completed steps |
 | Any `- [~]` | **Dirty resume** → run the reconciliation below first |
 | Frontmatter `status: blocked` | Read `## Notes`, surface the blocker to the user, wait |
+
+**Format gate.** This protocol reads the plan by section name. Confirm all of these exist:
+
+| Section | Which phase dies without it |
+|---|---|
+| frontmatter `status:` | Phase 1 entry mode, Phase 5 `blocked`, Phase 7 `done` |
+| `## Surgical Scope` | Phase 2 scope check, Phase 4 drift stop, Phase 6 orphan bound |
+| `## Definition of Done` | Phase 3 baseline, Phase 7 close out |
+| `## Steps` | Phase 4 |
+| `## Code Review` | Phase 7 |
+| `## Execution Log` | the whole state contract |
+
+Any of them missing → **do not tick anything.** Only the marker and Execution Log contract survives a format mismatch, so an agent that walks the steps anyway produces a flawless log over zero verification. That artifact is indistinguishable from success, which is exactly why the check comes first.
+
+Two acceptable routes:
+
+- **Stop and ask.** Write which sections are missing into the plan file itself — the finding is state, not conversation — leave every step unticked, and wait. A plan file that says why it was not executed is resumable; a silent stop is not.
+- **Upgrade to the current format first, with the user's agreement**, then execute the upgraded file. Never invent a `Definition of Done` mid-run and grade yourself against it.
+
+Also flag any step that no command can settle (`Make sure nothing else broke`, `Verify it looks right`). Saying so out loud is part of passing this gate — an unverifiable step can never legitimately reach `[x]`.
 
 **Dirty resume reconciliation** (a `- [~]` step exists):
 1. Run the version-control diff for the repo (`git status` + `git diff`).
@@ -133,8 +155,18 @@ Plan is sound → proceed. On Claude Code, mirror the steps into the todo tool f
 ### Phase 3 — Preflight
 
 1. `git status`. Uncommitted changes inside the Surgical Scope from another session → stop and surface. Never stash or discard silently.
-2. Run each `Definition of Done` command **once, now**, before changing anything. This captures the baseline: which ones already pass, which already fail. A DoD command that errors out because the tool is not installed is a broken plan, and you find that out now rather than at the end.
-3. Log the baseline in `## Notes`.
+2. **Read the project's convention files.** The plan is never the full contract. Your harness auto-loads only the filenames it knows, only at the paths it looks at — so a convention file named for a different harness, or nested one directory below the root, is invisible to you until you go looking. List them, then read the ones covering the files in `Surgical Scope`:
+
+   ```bash
+   # root, then every level down to the directories you are about to touch
+   ls CLAUDE.md AGENTS.md GEMINI.md CONTRIBUTING.md .cursorrules 2>/dev/null
+   find . -not -path '*/node_modules/*' \( -name 'CLAUDE.md' -o -name 'AGENTS.md' -o -name 'GEMINI.md' \)
+   ```
+
+   Name the files you read in `## Notes`. A convention obeyed by luck is not obeyed — the next execution breaks it. A convention file that contradicts the plan is a Phase 2 concern: raise it, do not pick a side yourself.
+
+3. Run each `Definition of Done` command **once, now**, before changing anything. This captures the baseline: which ones already pass, which already fail. A DoD command that errors out because the tool is not installed is a broken plan, and you find that out now rather than at the end.
+4. Log the baseline in `## Notes`.
 
 ### Phase 4 — Execution loop
 
@@ -178,10 +210,12 @@ Run the plan's teardown step. Bound the orphan scan strictly to the symbols in `
 ### Phase 7 — Close out
 
 1. Re-run **every** `Definition of Done` command, fresh, in one pass. Not the cached results from Phase 3.
-2. Fill `## Code Review` completely — every field gets a value, no blanks.
-3. All DoD items pass → frontmatter `status: done`. Any item fails → `status: blocked` with the reason.
-4. Final Execution Log line with state `done` or `blocked`.
-5. Report to the user: what changed, the DoD output, and what is left.
+2. **Read the whole diff, line by line**, before filling anything in. `git diff` plus `git status` for new files. The DoD checks what someone thought to check; the diff shows what you actually did. A green DoD over a diff nobody read is the failure mode this step exists for — a stray `.parent`, a deleted docstring, a debug print and an inline style all pass every test in the plan. For each changed line, answer: does it trace to a step, and does it obey the convention files read in Phase 3?
+3. **Any test added by this plan must pass with no external service running.** Run it with the project's services down. A test that needs a live database, a live API or a network key is an integration test — it belongs behind an explicit marker or a skip, never in the default suite, or the next person's DoD fails for reasons that have nothing to do with their change.
+4. Fill `## Code Review` completely — every field gets a value, no blanks.
+5. All DoD items pass → frontmatter `status: done`. Any item fails → `status: blocked` with the reason.
+6. Final Execution Log line with state `done` or `blocked`.
+7. Report to the user: what changed, the DoD output, and what is left.
 
 **Never commit or push.** Staging is the user's call unless they asked for it as part of the task.
 
@@ -205,6 +239,9 @@ A plan that satisfies these can be picked up by any harness with no conversation
 - Adding steps to the plan mid-execution instead of stopping
 - Marking `status: done` with an unchecked step anywhere in the file
 - Trusting a subagent's "success" report without checking the diff yourself
+- Ticking a step on a plan that has no `Definition of Done` to grade it against
+- Closing out without having read the diff — a green DoD is not a review
+- Adding a test that needs a live database or API to the default suite
 
 ## Rationalizations
 
@@ -216,6 +253,9 @@ A plan that satisfies these can be picked up by any harness with no conversation
 | "The Execution Log is overhead" | It is the only thing the other harness can read. |
 | "This one extra file is clearly needed" | Then the plan was wrong. Stop and say so. |
 | "I'll fix the remaining failure after marking it done" | Then it is not done. `blocked` is an honest status. |
+| "The plan is simple enough, the format doesn't matter here" | Five of seven phases bind to sections by name. Without them you are logging, not verifying. |
+| "The plan didn't ask for a docstring / a test / that convention" | The plan is not the only contract. Phase 3 reads the repo's convention files. |
+| "The DoD is green, the diff is fine" | The DoD checks what someone predicted. Read the diff — that is where the surprises are. |
 | "The user is waiting, just finish it" | A wrongly-`done` plan wastes more of their time than a `blocked` one. |
 
 ## Tooling on Claude Code

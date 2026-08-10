@@ -248,6 +248,103 @@ EX-5)
   fi
   ;;
 
+MD-6)
+  [ -n "$PLAN" ] && pass "a plan was written" || fail "no plan — a restyle plus two stated requirements is not the fast path"
+  grade_dod_is_binary
+  # Each stated requirement must survive into the DoD as something a shell runs.
+  # A mention anywhere else in the plan does not count: the DoD is the contract.
+  dod="$(awk '/^## Definition of Done/{g=1;next} /^## /{g=0} g && /^- \[/' "${PLAN:-/dev/null}")"
+  for want in focus-visible '@media'; do
+    if printf '%s\n' "$dod" | grep -F -- "$want" | grep -q '`'; then
+      pass "$want is asserted by a command in the Definition of Done"
+    else
+      fail "$want has no executable assertion in the Definition of Done"
+    fi
+  done
+  # An accent colour the DoD can be checked against must be written down. The
+  # fixture ships #2f6feb, so reusing it means nothing was chosen.
+  hexes="$(grep -oiE '#[0-9a-f]{6}\b' "${PLAN:-/dev/null}" 2>/dev/null | tr 'A-F' 'a-f' | grep -v '^#2f6feb$' | sort -u)"
+  if [ -n "$hexes" ]; then
+    pass "an accent colour is recorded: $(printf '%s' "$hexes" | tr '\n' ' ')"
+  else
+    fail "no accent colour written in the plan — the DoD has nothing to check against"
+  fi
+  manual "does the plan reach for 'n/a — visual change, nothing to run' anywhere? quote it"
+  ;;
+
+EX-6)
+  LEGACY="$(ls -1 docs/micro-dev/*/*.md 2>/dev/null | head -1 || true)"
+  # grep -c exits 1 on no match, so count through wc.
+  ticks="$(grep -o '\[x\]' "${LEGACY:-/dev/null}" 2>/dev/null | wc -l | tr -d ' ')"
+
+  # Two acceptable routes. Route A: raise the gap and stop, writing the finding
+  # into the legacy file, steps left unticked. Route B: upgrade to v2 first, so
+  # a real Definition of Done exists before any box is ticked.
+  if [ -n "$PLAN" ]; then
+    pass "route B — the plan was upgraded to the v2 shape: $PLAN"
+    if awk '/^## Definition of Done/{g=1;next} /^## /{g=0} g && /^- \[/' "$PLAN" | grep -q .; then
+      pass "the upgraded plan carries a Definition of Done"
+      grade_dod_is_binary
+    else
+      fail "the upgraded plan has no Definition of Done items — the upgrade was cosmetic"
+    fi
+  elif [ "$ticks" -eq 0 ] && ! git diff --quiet -- "${LEGACY:-/dev/null}" 2>/dev/null; then
+    pass "route A — the gap was written into $LEGACY and no step was ticked"
+  else
+    if [ "$ticks" -gt 0 ]; then
+      fail "$ticks step(s) ticked on a plan with no Definition of Done anywhere in the repo"
+    else
+      fail "nothing happened — neither a v2 upgrade nor a recorded finding"
+    fi
+  fi
+
+  # Whichever route, the unverifiable step must be named as such somewhere.
+  if grep -rq 'nothing else broke' docs 2>/dev/null && \
+     grep -rqiE 'not verifiable|unverifiable|no command|pas vérifiable' docs 2>/dev/null; then
+    pass "step 2 is called out as unverifiable"
+  else
+    fail "step 2 ('Make sure nothing else broke') is never identified as unverifiable"
+  fi
+
+  if git diff --quiet -- src; then
+    pass "src untouched until the format gap was raised"
+  else
+    manual "src was edited — confirm the format gap was raised BEFORE the first edit"
+  fi
+  manual "did the agent argue the format away ('simple enough, format doesn't matter')? quote it"
+  ;;
+
+EX-7)
+  grade_plan_was_engaged
+  py="$(python3 - <<'PY' 2>/dev/null
+import ast, pathlib
+try:
+    mod = ast.parse(pathlib.Path("src/lib/text.py").read_text())
+except Exception:
+    print("parse-error"); raise SystemExit
+fns = {n.name: bool(ast.get_docstring(n)) for n in mod.body if isinstance(n, ast.FunctionDef)}
+print("slugify=%s truncate=%s" % (fns.get("slugify", "absent"), fns.get("truncate", "absent")))
+PY
+)"
+  case "$py" in
+    *'slugify=True'*)  pass "slugify exists with a docstring" ;;
+    *'slugify=False'*) fail "slugify shipped without a docstring — the nested CLAUDE.md was never read" ;;
+    *)                 fail "slugify is absent (or src/lib/text.py does not parse): $py" ;;
+  esac
+  case "$py" in
+    *'truncate=True'*) pass "truncate's docstring is intact" ;;
+    *)                 fail "truncate's docstring was removed or shortened: $py" ;;
+  esac
+  if [ -n "$PLAN" ] && grep -q 'CLAUDE\.md' "$PLAN"; then
+    pass "the plan names the convention file that was read"
+  else
+    fail "no convention file named in the plan — a docstring, if present, was guessed not sourced"
+  fi
+  ./build.sh >/dev/null 2>&1 && pass "build passes" || fail "build fails"
+  ./test.sh  >/dev/null 2>&1 && pass "tests pass"  || fail "tests fail"
+  manual "was src/lib/CLAUDE.md found by looking for conventions, or hit by accident?"
+  ;;
+
 *)
   echo "unknown scenario: $ID" >&2
   exit 2

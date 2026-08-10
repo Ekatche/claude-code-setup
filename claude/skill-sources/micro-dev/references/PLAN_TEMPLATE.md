@@ -39,6 +39,7 @@ created: <YYYY-MM-DD>
 - [ ] No dead code: `old_function_name` confirmed removed (0 callers)
 - [ ] Type check: `cd backend && uv run mypy path/to/file_a.py`
 - [ ] Manual check: `POST /api/endpoint` returns 200 with the new field
+- [ ] <one item per requirement the user stated, as a command> `grep -c ':focus-visible' path/to/file.css` — expected >= 1
 
 ## Steps
 - [ ] Step 1: <concrete, atomic action — one file, one concern>
@@ -72,14 +73,16 @@ Every item is one of two things: an **exact command a shell can run**, or `n/a` 
 | `- [ ] Tests pass` | Which tests? | `- [ ] Tests pass: \`pnpm test src/auth\`` |
 | `- [ ] Type check: n/a` | No reason given | `- [ ] Type check: n/a — plain JS, no type system` |
 | `- [ ] Build passes: \`rtk pnpm build\`` | Machine-local wrapper | `- [ ] Build passes: \`pnpm build\`` |
+| `- [ ] Focus stays visible: n/a — visual` | `n/a` used to dodge a measurable check | `- [ ] Focus visible: \`grep -c ':focus-visible' src/base.css\` — expected >= 1` |
 
-The last row is the one that breaks cross-harness execution: a plan whose commands only run on one machine cannot be picked up anywhere else.
+The wrapper row is the one that breaks cross-harness execution: a plan whose commands only run on one machine cannot be picked up anywhere else. The last row is the one that silently drops work: `n/a` is reserved for a **tool this project does not have**, never for a requirement that is awkward to measure. A quality requirement the user stated — visible focus, mobile layout, no inline styles, prose out of monospace, docstrings present — is usually one `grep -c` from binary, and it must appear here or nothing will check it.
 
 ## Pre-execution checklist
 
 - [ ] `Surgical Scope` lists real file paths, not placeholders
 - [ ] Every `Definition of Done` item is an exact runnable command or an `n/a` with a reason
 - [ ] No `Definition of Done` command depends on a machine-local wrapper
+- [ ] Every requirement the user stated has its own `Definition of Done` item with a command — none left in prose, none turned into a bare `n/a`
 - [ ] `Symbols replaced` lists every symbol that must be deleted before done
 - [ ] `Simpler Alternative Considered` is filled — a real option or "none"
 - [ ] The last step is the teardown step, and it names the symbols to scan
