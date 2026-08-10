@@ -20,6 +20,10 @@ et **Antigravity / agy** (`~/.gemini/`).
 - `bootstrap.sh`, `sync.sh`, `drift-check.sh` : les trois scripts qui
   installent, resynchronisent et auditent la configuration (détail plus bas).
 - `scrub-check.sh` : le garde-fou sécurité, exécuté en pre-commit et en CI.
+- `docs/micro/` : les plans micro-dev des changements apportés **à ce repo**.
+  Ils décrivent ce qui est amélioré ici et pourquoi. Un plan versionné ici ne
+  nomme aucun projet, aucun dépôt applicatif et aucun chemin de module privé —
+  l'anecdote qui a motivé un changement se raconte sans nom propre.
 
 ## Ce que ce repo ne contient pas
 
