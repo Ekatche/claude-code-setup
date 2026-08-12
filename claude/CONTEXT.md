@@ -128,6 +128,21 @@ une action payante à quota invisible au moment de l'appel, donc toujours
 initiée explicitement (par moi avec confirmation, ou par l'utilisateur),
 même logique que `/code-review ultra`.
 
+**Quand proposer un handoff** (je propose, tu confirmes — jamais automatique) :
+- Contexte énorme à ingérer (scan d'un gros repo, beaucoup de fichiers) où
+  `gemini-3.6-flash-high` (1M tokens) dépasse largement ma fenêtre utile.
+- Tâche parallélisable : un chantier qu'agy peut mener pendant que je
+  continue autre chose ici, sans avoir besoin de ma supervision continue.
+- Second avis : vérifier une décision avec un modèle différent
+  (`claude-sonnet-4-6` via agy, ou `gpt-oss-120b-medium` pour une
+  perspective vraiment distincte de la mienne).
+
+**Quand ne pas proposer** :
+- Tâche courte/rapide — overhead du handoff (lancement process, latence,
+  quota consommé) pas rentable face au gain.
+- Tâche qui a besoin du wiring spécifique à cet environnement (rtk, mgrep,
+  hooks Claude Code) — agy ne l'a pas.
+
 **Quota** : pas de commande CLI dédiée (`/usage` existe mais est une slash
 command interactive, inutilisable en headless). Contournement vérifié le
 2026-08-12 : `agy-statusline.sh` (référencé par
