@@ -65,6 +65,28 @@ propre clé.** Même remarque que pour Tavily : la clé va dans
 `python3 -m venv "$HOME/.local/token-savior-venv"` puis installez le paquet
 avec `pip install "token-savior-recall==<version du manifeste>"`.
 
+Le serveur MCP `token-savior` (déclaré dans `~/.claude.json`, hors repo) démarre
+sans aucun projet enregistré si son `env` est vide : le premier appel à
+n'importe quel tool échoue avec `No projects registered. Call
+set_project_root('/path') first.` — et `set_project_root` lui-même n'est pas
+annoncé par le profil `optimized` par défaut (15/69 tools), donc Claude ne
+peut pas s'auto-corriger. Ajoutez `WORKSPACE_ROOTS` (chemins absolus séparés
+par des virgules) à l'`env` de ce serveur pour que le ou les projets soient
+enregistrés au démarrage :
+
+```json
+"token-savior": {
+  "type": "stdio",
+  "command": "$HOME/.local/token-savior-venv/bin/token-savior",
+  "args": [],
+  "env": { "WORKSPACE_ROOTS": "/chemin/absolu/vers/le/projet" }
+}
+```
+
+Chemin de projet, pas un secret : ce n'est pas couvert par `scrub-check.sh`,
+mais reste spécifique à votre poste — ne le committez pas ailleurs que dans
+votre propre `~/.claude.json`.
+
 ## Antigravity (agy)
 
 Le harnais `~/.gemini/` est celui de l'application Antigravity. Installez
