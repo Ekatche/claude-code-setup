@@ -120,6 +120,47 @@ sortie de mgrep et écrit `~/.claude/state/mgrep_quota.json`. Les blocages se
 lèvent alors seuls pendant 24 h — mettre mgrep en tête n'a de sens que si le
 repli est automatique. Après recharge : `rm ~/.claude/state/mgrep_quota.json`.
 
+### Handoff vers Antigravity (agy)
+
+`agy -p "<tâche>" --output-format json` délègue une exécution à Antigravity
+(headless, non-interactif). Jamais déclenché par un hook automatique — c'est
+une action payante à quota invisible au moment de l'appel, donc toujours
+initiée explicitement (par moi avec confirmation, ou par l'utilisateur),
+même logique que `/code-review ultra`.
+
+**Quota** : pas de commande CLI dédiée (`/usage` existe mais est une slash
+command interactive, inutilisable en headless). Contournement vérifié le
+2026-08-12 : `agy-statusline.sh` (référencé par
+`~/.gemini/antigravity-cli/settings.json` → `statusLine.command`) reçoit le
+payload JSON d'agy sur stdin à chaque changement d'état — **y compris en
+mode headless** — et le persiste dans `~/.claude/state/agy_quota.json`.
+Lire ce fichier avant un handoff donne un quota récent (dernier run agy),
+jamais garanti temps réel — même limite que `mgrep-quota-detect.sh` côté
+snapshot. Champs utiles : `.quota.<bucket>.remaining_fraction`,
+`.quota.<bucket>.reset_in_seconds`, `.plan_tier`, `.model`.
+
+Deux buckets de quota observés, semblent séparés par famille de modèle :
+`gemini-5h`/`gemini-weekly` (modèles Gemini) vs `3p-5h`/`3p-weekly`
+(modèles tiers — Claude, gpt-oss). Router vers un bucket qui a de la marge
+plutôt que celui déjà entamé quand la tâche le permet.
+
+**Modèles disponibles** (`agy models`) — pas de défaut documenté, toujours
+passer `--model` explicite pour un handoff prévisible :
+
+| Modèle | Contexte / effort | Bucket | Cas d'usage |
+|---|---|---|---|
+| `gemini-3.6-flash-high` | 1M tokens, effort high | gemini | Défaut agy. Gros repo, beaucoup de fichiers à ingérer, bon rapport vitesse/qualité |
+| `gemini-3.6-flash-medium`/`low` | 1M tokens | gemini | Tâche mécanique/simple, priorité vitesse sur qualité |
+| `gemini-3.5-flash-high`/`medium`/`low` | ~1M tokens (génération précédente) | gemini | Repli si 3.6 indisponible ou bucket gemini à sec |
+| `gemini-3.1-pro-high`/`low` | raisonnement "Pro", pas de tier medium | gemini | Analyse qui a besoin de plus de profondeur qu'un Flash |
+| `claude-sonnet-4-6` | 250k tokens, thinking | 3p | Code complexe, refactor — même famille que Claude Code, cohérence de style |
+| `claude-opus-4-6-thinking` | thinking, plus capable que sonnet | 3p | Tâche la plus dure : architecture, debug profond, quand sonnet insuffit |
+| `gpt-oss-120b-medium` | open-weight OpenAI | 3p | Second avis / perspective différente, ou repli si gemini+claude buckets épuisés |
+
+Tailles de contexte confirmées par payload réel : `gemini-3.6-flash-high` =
+1 048 576 tokens, `claude-sonnet-4-6` = 250 000 tokens. Le reste est déduit
+du nom du modèle, pas mesuré.
+
 ### Outil ou MCP mal configuré
 
 Différent du quota : une config absente (clé API manquante, projet non
