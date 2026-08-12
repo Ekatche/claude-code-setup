@@ -120,6 +120,29 @@ sortie de mgrep et écrit `~/.claude/state/mgrep_quota.json`. Les blocages se
 lèvent alors seuls pendant 24 h — mettre mgrep en tête n'a de sens que si le
 repli est automatique. Après recharge : `rm ~/.claude/state/mgrep_quota.json`.
 
+### Outil ou MCP mal configuré
+
+Différent du quota : une config absente (clé API manquante, projet non
+enregistré, serveur MCP inaccessible) ne se corrige pas toute seule. Pas de
+repli silencieux légitime ici — le seul comportement correct est de le dire à
+l'utilisateur et de proposer de l'aider à corriger, jamais de continuer comme
+si de rien n'était ni d'abandonner sans un mot.
+
+`tool-config-not-set.sh` (PostToolUse `Bash|mcp__.*`) détecte quatre cas et
+injecte la marche à suivre exacte (fichier à éditer, section de
+`PREREQUISITES.md`, qui doit agir) :
+
+| Cas détecté | Signal | Fix documenté |
+|---|---|---|
+| `token-savior` sans projet enregistré | `No projects registered` | `WORKSPACE_ROOTS` dans `~/.claude.json` — `PREREQUISITES.md` § Environnement Python token-savior |
+| `mgrep` sans session valide (≠ quota) | `unauthorized`, `401`, `please mgrep login` | `mgrep login` — l'utilisateur le lance lui-même, flux OAuth |
+| `tvly` / `firecrawl` (CLI) sans clé | `api key`, `401` | `~/.gemini/config/mcp_config.json` — `PREREQUISITES.md` § Remplir mcp_config.json |
+| Serveur MCP générique down | `ENOENT`, `MCP error`, `server disconnected` | vérifier `~/.claude.json` ou `mcp_config.json` selon le harnais |
+
+État : `~/.claude/state/tool_config_alerts.json`, throttle 10 min par clé —
+anti-spam seulement, jamais un cache de statut « réparé ». Réinitialisation :
+`rm ~/.claude/state/tool_config_alerts.json`.
+
 ## Doublons : qui pilote
 
 Plusieurs outils installés font un travail voisin. Un seul pilote par besoin,

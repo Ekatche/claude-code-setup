@@ -19,7 +19,7 @@ for f in claude/hooks/*.mjs; do
 done
 
 n=$(ls claude/hooks | wc -l | tr -d ' ')
-[ "$n" -eq 13 ] || { echo "FAIL: $n hooks Claude, 13 attendus"; fail=1; }
+[ "$n" -eq 14 ] || { echo "FAIL: $n hooks Claude, 14 attendus"; fail=1; }
 
 # Chaque hook référencé par settings.json doit exister dans le repo.
 python3 - <<'PY' || fail=1
