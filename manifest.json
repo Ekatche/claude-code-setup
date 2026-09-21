@@ -32,6 +32,7 @@
   },
   "cli": [
     { "name": "rtk", "check": "rtk --version", "note": "Rust Token Killer — proxy CLI, réécrit cat/ls/git/grep" },
+    { "name": "code-review-graph", "check": "code-review-graph --version", "note": "Analyse de graphe de code & serveur MCP" },
     { "name": "mgrep", "check": "mgrep --version", "note": "recherche sémantique, compte Mixedbread requis" },
     { "name": "ast-grep", "check": "ast-grep --version", "note": "recherche structurelle AST, binaire aussi appelé sg" },
     { "name": "firecrawl", "check": "firecrawl --status", "note": "scraping, compte requis" },
