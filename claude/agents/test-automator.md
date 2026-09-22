@@ -1,7 +1,7 @@
 ---
 name: test-automator
 description: "Use this agent when you need to build, implement, or enhance automated test frameworks, create test scripts, or integrate testing into CI/CD pipelines."
-tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol
+tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol, mcp__token-savior__get_call_chain, mcp__code-review-graph__semantic_search_nodes_tool, mcp__code-review-graph__query_graph_tool, mcp__code-review-graph__get_impact_radius_tool
 model: sonnet
 ---
 

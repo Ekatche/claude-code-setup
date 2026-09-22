@@ -1,7 +1,7 @@
 ---
 name: mcp-developer
 description: "Use this agent when you need to build, debug, or optimize Model Context Protocol (MCP) servers and clients that connect AI systems to external tools and data sources."
-tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol, mcp__context7__resolve-library-id, mcp__context7__query-docs
+tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol, mcp__token-savior__get_call_chain, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__code-review-graph__semantic_search_nodes_tool, mcp__code-review-graph__query_graph_tool, mcp__code-review-graph__get_impact_radius_tool
 model: sonnet
 ---
 

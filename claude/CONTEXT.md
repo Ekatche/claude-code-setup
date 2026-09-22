@@ -72,6 +72,18 @@ nom, c'est du gaspillage, pas de la priorisation.
 `grep`, `rg`, `find -name` bruts et le tool `Grep` natif sont bloqués tant
 qu'aucun appel supérieur n'a eu lieu dans le tour.
 
+**Piège multi-projet token-savior.** `WORKSPACE_ROOTS` (`~/.claude.json`)
+peut lister plusieurs racines, une par projet enregistré. Sans paramètre
+`project` explicite, `find_symbol`/`get_call_chain`/`search_codebase`
+scanne le premier projet enregistré, pas le repo courant — confirmé sur un
+petit projet (~16 fichiers) : `find_symbol` sans `project` renvoie
+faussement "not found" (scanned_files dans les centaines, signe qu'un
+autre projet plus gros a été scanné à la place), alors que passer
+`project: "<nom du projet>"` explicitement trouve le symbole. Toujours
+passer `project: "<alias ou chemin absolu>"` sur ces trois outils dès
+qu'il y a plus d'une racine enregistrée — vaut aussi pour les sous-agents
+qui héritent de ce serveur MCP.
+
 ### Web
 
 Cinq fournisseurs installés, tous vivants. Le partage n'est pas « lequel est
@@ -250,3 +262,73 @@ contexte.
 façon transparente via le hook `PreToolUse Bash`. N'écris pas de contournement
 et n'appelle pas `rtk proxy` pour éviter la compaction — c'est un outil de
 debug de rtk lui-même.
+
+## Délégation vers agy (Antigravity CLI)
+
+`agy` (`~/.local/bin/agy`) est un harnais séparé, pas un Agent tool interne :
+process externe, quota/compte propre, aucun retour dans mon contexte sauf ce
+qu'il imprime sur stdout. Décision de délégation prise en autonome, sans
+demander confirmation à chaque appel — mais les garde-fous ci-dessous
+restent non négociables.
+
+**Quand déléguer** : tâche bien scopée mais coûteuse à faire inline dans
+cette session — gros audit multi-fichiers, exploration/recherche profonde,
+génération de contenu volumineuse, refactor mécanique répété sur beaucoup de
+fichiers. Pas pour une micro-tâche. L'Agent tool interne reste premier choix
+quand il suffit — agy sert quand le coût (tokens, tours) de rester inline
+dépasse le coût d'un process externe à superviser après coup.
+
+**Comment** :
+
+```bash
+agy -p "<prompt autonome complet, contexte inclus>" \
+  --mode accept-edits --dangerously-skip-permissions \
+  --add-dir <dossiers concernés>
+```
+
+`--dangerously-skip-permissions` est requis en mode `-p` (print, non
+interactif) : sans TTY, agy ne peut pas attendre une confirmation humaine.
+`--model` / `--effort` au besoin. `--add-dir` limité au périmètre réel de la
+tâche, jamais `$HOME` entier.
+
+**Après exécution — vérification obligatoire par Claude Sonnet** :
+
+agy exécute en boîte noire (pas de review inline pendant qu'il tourne). Une
+fois qu'il rend la main, le diff qu'il a produit doit être relu par un agent
+Claude (Sonnet) avant que la tâche soit considérée faite — jamais se fier au
+« success » qu'agy rapporte lui-même. Concrètement : `Agent` tool,
+`model: "sonnet"`, sur le diff/fichiers touchés (`git diff` du périmètre
+`--add-dir`), avec pour instruction de vérifier correction, régressions,
+et respect du scope demandé — pas juste relire vite fait en ligne.
+
+**Garde-fous, édition autonome ou pas** :
+
+- Jamais d'opération destructive/irréversible déléguée sans passer par
+  l'utilisateur d'abord (force-push, `rm -rf`, drop DB, migration
+  irréversible) — la prudence sur le blast radius s'applique peu importe qui
+  exécute la commande, agy y compris.
+- Un « success » rapporté par un process externe n'est pas une preuve — cf.
+  `executing-micro-plans` : « Trusting a subagent's success report without
+  checking the diff yourself » est un red flag, agy n'y échappe pas. La
+  vérification Sonnet ci-dessus est cette preuve.
+
+## Choix du modèle pour les agents (Agent tool)
+
+Le `model` déjà fixé dans le frontmatter d'un agent (`.claude/agents/*.md`)
+reflète l'usage typique de cet agent — ne pas l'éditer pour une tâche
+ponctuelle. La charge varie tâche par tâche, pas agent par agent : passer
+le param `model` au moment de l'appel `Agent` colle mieux qu'une édition de
+fichier à chaque fois.
+
+Heuristique de sélection, par charge réelle de la tâche (pas par taille du
+texte à traiter) :
+
+| Charge | Modèle | Exemples |
+|---|---|---|
+| Mécanique, gros volume, faible raisonnement | `haiku` | lookup répétitif, formatage, résumé simple, grep-like |
+| Défaut | `sonnet` | code, review, refactor, debug normal — 90 % des cas |
+| Raisonnement lourd, ambigu | `opus` | architecture, root-cause subtil, decision multi-critère — seulement si le gain justifie le coût |
+
+Omettre `model` quand aucun override n'est justifié : l'agent hérite alors du
+modèle de session, ce qui est correct par défaut. Ne jamais éditer un agent
+existant juste pour changer son modèle par défaut sans demande explicite.

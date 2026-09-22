@@ -1,7 +1,7 @@
 ---
 name: javascript-pro
 description: "Use this agent when you need to build, optimize, or refactor modern JavaScript code for browser, Node.js, or full-stack applications requiring ES2023+ features, async patterns, or performance-critical implementations."
-tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol
+tools: Read, Write, Edit, Bash, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol, mcp__token-savior__get_call_chain, mcp__code-review-graph__semantic_search_nodes_tool, mcp__code-review-graph__query_graph_tool, mcp__code-review-graph__get_impact_radius_tool
 model: sonnet
 ---
 

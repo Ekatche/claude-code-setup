@@ -1,7 +1,7 @@
 ---
 name: ux-researcher
 description: "Use this agent when you need to conduct user research, analyze user behavior, or generate actionable insights to validate design decisions and uncover user needs. Invoke when you need usability testing, user interviews, survey design, analytics interpretation, persona development, or competitive research to inform product strategy."
-tools: Read, Write, Glob, Bash, WebFetch, mcp__token-savior__search_codebase
+tools: Read, Write, Glob, Bash, WebFetch, mcp__token-savior__search_codebase, mcp__code-review-graph__semantic_search_nodes_tool, mcp__code-review-graph__query_graph_tool
 model: sonnet
 ---
 

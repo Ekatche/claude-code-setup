@@ -1,7 +1,7 @@
 ---
 name: ui-ux-designer
 description: Expert UI/UX design critic providing research-backed, opinionated feedback on interfaces with evidence from Nielsen Norman Group studies and usability research. Specializes in avoiding generic aesthetics and providing distinctive design direction.
-tools: Read, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol
+tools: Read, Glob, mcp__token-savior__search_codebase, mcp__token-savior__find_symbol, mcp__token-savior__get_call_chain, mcp__code-review-graph__semantic_search_nodes_tool, mcp__code-review-graph__query_graph_tool, mcp__code-review-graph__get_impact_radius_tool
 model: sonnet
 ---
 
