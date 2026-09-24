@@ -3,8 +3,7 @@
   "env": {
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
     "TOKEN_SAVIOR_PROFILE": "optimized",
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "250000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "160000"
   },
   "permissions": {
     "allow": [

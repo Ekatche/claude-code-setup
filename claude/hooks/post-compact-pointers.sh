@@ -11,8 +11,6 @@
 
 set -euo pipefail
 
-STATE_DIR="${HOME}/.claude/state"
-
 echo "CONTEXTE VENANT D'ÊTRE COMPACTÉ — le détail a été résumé, pas conservé."
 echo "Avant de continuer, récupère l'état depuis le disque :"
 echo
@@ -24,14 +22,17 @@ echo
 echo "  2. Fichier de plan actif — s'il y en a un, c'est lui l'état de vérité,"
 echo "     pas ta liste de tâches affichée. Relis-le avant de reprendre."
 
-# Plans micro-dev récents dans le cwd (pointeur seulement, jamais le contenu)
-if [ -d "./docs/plans" ]; then
-  recent=$(ls -t ./docs/plans/*.md 2>/dev/null | head -n 3 || true)
-  if [ -n "$recent" ]; then
-    echo
-    echo "     Plans les plus récents ici :"
-    echo "$recent" | sed 's/^/       /'
-  fi
+# Plans récents dans le cwd (pointeur + statut, jamais le contenu).
+# micro-dev : docs/micro/<date>-<slug>/PLAN.md ; superpowers:writing-plans :
+# docs/superpowers/plans/*.md.
+recent=$(ls -t ./docs/micro/*/PLAN.md ./docs/superpowers/plans/*.md 2>/dev/null | head -n 3 || true)
+if [ -n "$recent" ]; then
+  echo
+  echo "     Plans les plus récents ici :"
+  while IFS= read -r p; do
+    st=$(sed -n 's/^status:[[:space:]]*//p' "$p" | head -n 1)
+    echo "       $p${st:+  [status: $st]}"
+  done <<< "$recent"
 fi
 
 echo
@@ -40,13 +41,6 @@ echo
 echo "  4. Contrat mémoire, hiérarchie de recherche et règles de lecture :"
 echo "     ~/.claude/CONTEXT.md — toujours en vigueur, relis-le si tu hésites"
 echo "     sur quel outil utiliser."
-
-# Rappel du dernier plan touché toutes sessions confondues, si tracé
-LAST_PLAN="${STATE_DIR}/last_plan_path.txt"
-if [ -f "$LAST_PLAN" ]; then
-  p=$(cat "$LAST_PLAN" 2>/dev/null || true)
-  [ -n "$p" ] && [ -f "$p" ] && echo && echo "  Dernier plan exécuté (toutes sessions) : $p"
-fi
 
 echo
 echo "Règle qui a mené ici : l'état vit sur disque, jamais uniquement dans le"

@@ -38,10 +38,28 @@ de la confiance.
 
 ## Auto-compact
 
-Le compact déclenche à 200 000 tokens (`CLAUDE_CODE_AUTO_COMPACT_WINDOW` ×
-`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`, cf. `settings.json`). Il résume — il ne
-préserve pas le détail. Ce qui n'est pas sur disque au moment du compact est
+Le compact déclenche à 160 000 tokens sur **tous les modèles**
+(`CLAUDE_CODE_AUTO_COMPACT_WINDOW=160000`, cf. `settings.json`). Pourquoi une
+valeur absolue et pas un pourcentage :
+
+- la fenêtre est plafonnée à celle du modèle, donc toute valeur ≥ 200 000
+  tombe sur la limite dure d'un modèle 200K (Haiku, Opus via Bedrock/Vertex) ;
+- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` ne s'applique qu'aux sessions qui
+  compactent déjà avant la limite — les modèles 200K n'en font pas partie par
+  défaut, le pourcentage y serait ignoré et le compact deviendrait un
+  sauvetage à la limite dure. Il n'est donc plus utilisé ;
+- 160 000 laisse 40K de marge sous 200K et s'applique tel quel à un modèle 1M.
+
+Le compact résume — il ne préserve pas le détail. Ce qu'il doit garder est
+écrit dans la section `# Compact instructions` de `~/.claude/CLAUDE.md` (seul
+canal documenté ; un hook `PreCompact` ne peut que bloquer, sa sortie
+n'atteint pas le résumé). Ce qui n'est pas sur disque au moment du compact est
 perdu, y compris à l'intérieur d'un subagent : le seuil s'applique aussi à eux.
+
+`compact-reminder.sh` (UserPromptSubmit) lit l'usage réel dans le transcript
+et prévient à 70 % puis 90 % du seuil : c'est le moment d'un `/compact
+<focus>` manuel à une frontière de tâche, plus fidèle qu'un auto-compact en
+pleine opération.
 
 Conséquence pratique, pas une suggestion : avant toute opération longue
 (fan-out de subagents, boucle de build, exploration large), écris l'état
