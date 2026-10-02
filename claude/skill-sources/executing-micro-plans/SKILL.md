@@ -11,6 +11,19 @@ allowed-tools:
   - Task
   - mcp__token-savior__search_codebase
   - mcp__token-savior__find_symbol
+  - mcp__token-savior__get_call_chain
+  - mcp__token-savior__get_function_source
+  - mcp__token-savior__get_full_context
+  - mcp__token-savior__find_dead_code
+  - mcp__token-savior__ts_search
+  - mcp__code-review-graph__semantic_search_nodes_tool
+  - mcp__code-review-graph__query_graph_tool
+  - mcp__code-review-graph__get_impact_radius_tool
+  - mcp__code-review-graph__get_affected_flows_tool
+  - mcp__code-review-graph__get_minimal_context_tool
+  - mcp__code-review-graph__get_review_context_tool
+  - mcp__code-review-graph__detect_changes_tool
+  - mcp__code-review-graph__refactor_tool
 ---
 
 # Executing Micro Plans
@@ -207,6 +220,8 @@ If the cause of the failure is genuinely unknown (not a typo, not an obvious ove
 ### Phase 6 — Teardown
 
 Run the plan's teardown step. Bound the orphan scan strictly to the symbols in `Surgical Scope → Symbols replaced` — never a repo-wide dead-code sweep. Confirm zero orphans from this task's own symbols.
+
+Where a code graph is available, the orphan scan is a `callers_of` query per replaced symbol (zero callers left = no orphan), confirmed by a text grep on the symbol name — the graph misses dynamic references (string dispatch, templates, reflection) and can be stale. Without a graph, the text grep alone. See `references/HARNESS_MAP.md` § Tooling that may be absent.
 
 ### Phase 7 — Close out
 

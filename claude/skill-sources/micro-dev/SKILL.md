@@ -11,6 +11,21 @@ allowed-tools:
   - Task
   - mcp__token-savior__search_codebase
   - mcp__token-savior__find_symbol
+  - mcp__token-savior__get_call_chain
+  - mcp__token-savior__get_function_source
+  - mcp__token-savior__get_full_context
+  - mcp__token-savior__find_dead_code
+  - mcp__token-savior__ts_search
+  - mcp__code-review-graph__semantic_search_nodes_tool
+  - mcp__code-review-graph__query_graph_tool
+  - mcp__code-review-graph__get_impact_radius_tool
+  - mcp__code-review-graph__get_affected_flows_tool
+  - mcp__code-review-graph__get_minimal_context_tool
+  - mcp__code-review-graph__get_review_context_tool
+  - mcp__code-review-graph__detect_changes_tool
+  - mcp__code-review-graph__refactor_tool
+  - mcp__context7__resolve-library-id
+  - mcp__context7__query-docs
 ---
 
 # micro-dev
@@ -333,6 +348,28 @@ governs the session that writes it, not the file it produces.
 Steps 3 and 4 (locating the symbols and files that go into `Surgical Scope`)
 are the token-expensive part of planning. On this machine they are also gated:
 
+- **Past plans first.** Start with `mgrep '<question>' docs/micro` — it answers
+  "did we already do something like this?" and satisfies the search gate, so
+  the follow-up `rtk grep -i '<keyword>' docs/micro/INDEX.md` is not refused.
+  A raw `grep` as the first search of the turn is. The mgrep store does not
+  follow moves: after a sweep moved something, use `mgrep search -s` (sync
+  first), or a hit may name a pre-archive path. The folder slug survives the
+  move — when a hit does not exist on disk, `rtk grep '<slug>'
+  docs/micro/INDEX.md` gives its current path.
+- **Project with a code graph** (`code-review-graph` tools present — the
+  project's `CLAUDE.md` says so): use it before any file read to fill
+  `Surgical Scope`. `semantic_search_nodes_tool` locates the symbol;
+  `get_impact_radius_tool` on it lists the files a change reaches;
+  `query_graph_tool` with `callers_of` decides *extend* vs *replace*, and with
+  `tests_for` names the test file and command for `Definition of Done`. The
+  graph can be stale: confirm in the source before writing the plan. An empty
+  result means "not indexed", not "does not exist".
+- **token-savior: always pass `project`.** Several projects are registered on
+  this machine; without `project: "<repo name or absolute path>"`,
+  `find_symbol` / `get_call_chain` / `search_codebase` scan the first
+  registered project and report a false "not found".
+- **Library or API (step 4)**: Context7 (`resolve-library-id` then
+  `query-docs`) before any web search.
 - Search by need, not by price. A natural-language question about the codebase
   goes to `mgrep '<question>'` first — the subscription is paid for exactly
   this, and a free fallback engages automatically when the quota runs out. A

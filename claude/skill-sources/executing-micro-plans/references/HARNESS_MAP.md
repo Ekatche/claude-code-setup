@@ -25,7 +25,18 @@ A session that updated the todo list but not the plan file has produced no durab
 
 ## Tooling that may be absent
 
-`mgrep`, `rtk`, `code-review-graph`, `semgrep` are local accelerants on one specific machine, not requirements. On a harness or machine where they are not installed, fall back to native grep/glob plus targeted reads. What is portable is the ordering principle — search cheap before reading whole files — not the tool names.
+`mgrep`, `rtk`, `code-review-graph`, `token-savior`, `semgrep` are local accelerants on one specific machine, not requirements. On a harness or machine where they are not installed, fall back to native grep/glob plus targeted reads. What is portable is the ordering principle — search cheap before reading whole files — not the tool names.
+
+Where they are installed (Claude Code on this machine):
+
+| Need | Tool | Fallback |
+|---|---|---|
+| Who calls a replaced symbol (orphan scan) | `mcp__code-review-graph__query_graph_tool`, pattern `callers_of` | `mcp__token-savior__get_call_chain`, then text grep |
+| Which test covers a symbol | `query_graph_tool`, pattern `tests_for` | text grep on the symbol in the test tree |
+| What a change reaches | `mcp__code-review-graph__get_impact_radius_tool` | callers walk by hand |
+| A symbol whose name is known | `mcp__token-savior__find_symbol` — always pass `project`, several projects are registered | text grep |
+
+Graph results are a narrowing step: confirm in the source before acting, and treat an empty result as "not indexed", not "absent".
 
 Never put a machine-specific wrapper into a plan's `Definition of Done`. Write `pnpm build`, not `rtk pnpm build`. The DoD must be runnable by whoever picks the plan up.
 
