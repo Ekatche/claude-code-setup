@@ -48,6 +48,7 @@ All four boxes check out:
 ```markdown
 ---
 task: Add page_count field to GET /api/documents/{id} response
+description: Add page_count integer field to document API response — DocumentResponse model, get_document_by_id service
 status: planned
 created: 2026-07-31
 ---
@@ -110,6 +111,7 @@ none — the request is already the minimal change
 - `No dead code` reads `n/a` **with the reason**, not blank. A blank field is indistinguishable from a forgotten one.
 - The dead-code gate never fires — no symbols were replaced — so the teardown step is light.
 - The Execution Log carries evidence per step, not just a status. `12 passed` is what makes it auditable from another harness.
+- `description` names the model and service touched, not just "add a field" — that's what a later `mgrep`/`grep` over `docs/micro/INDEX.md` matches on.
 
 ---
 
@@ -122,6 +124,7 @@ none — the request is already the minimal change
 ```markdown
 ---
 task: Extract price calculation logic to utils/pricing.py
+description: Extract calculate_price() pure function from billing_service._compute_billing_amount into utils/pricing.py
 status: planned
 created: 2026-07-31
 ---

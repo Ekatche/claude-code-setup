@@ -37,6 +37,7 @@ Act as an engineer who treats the plan file as the only source of truth and refu
 **Do NOT use when:**
 - No plan file exists → use `micro-dev` to produce one first
 - The task was fast-path (daily-log only, no PLAN.md) → nothing to execute
+- The plan sits under `docs/micro/archive/` → it is already `done`; read it for reference, do not re-run it
 - The plan is multi-phase / architectural → wrong tool, that is GSD territory
 
 ## The Iron Law
@@ -213,7 +214,7 @@ Run the plan's teardown step. Bound the orphan scan strictly to the symbols in `
 2. **Read the whole diff, line by line**, before filling anything in. `git diff` plus `git status` for new files. The DoD checks what someone thought to check; the diff shows what you actually did. A green DoD over a diff nobody read is the failure mode this step exists for — a stray `.parent`, a deleted docstring, a debug print and an inline style all pass every test in the plan. For each changed line, answer: does it trace to a step, and does it obey the convention files read in Phase 3?
 3. **Any test added by this plan must pass with no external service running.** Run it with the project's services down. A test that needs a live database, a live API or a network key is an integration test — it belongs behind an explicit marker or a skip, never in the default suite, or the next person's DoD fails for reasons that have nothing to do with their change.
 4. Fill `## Code Review` completely — every field gets a value, no blanks.
-5. All DoD items pass → frontmatter `status: done`. Any item fails → `status: blocked` with the reason.
+5. All DoD items pass → frontmatter `status: done`. Any item fails → `status: blocked` with the reason. Write `done` exactly — not `complete` or `completed`; `micro-dev`'s archive sweep matches it literally. Leave the plan folder where it is: archiving is the sweep's job, not this skill's.
 6. Final Execution Log line with state `done` or `blocked`.
 7. Report to the user: what changed, the DoD output, and what is left.
 

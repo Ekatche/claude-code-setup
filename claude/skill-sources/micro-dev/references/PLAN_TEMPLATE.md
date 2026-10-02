@@ -9,6 +9,7 @@ Section headings are a contract: `executing-micro-plans` reads them by name, pos
 ```markdown
 ---
 task: <one-line description of what this task achieves>
+description: <keyword-dense one-liner for grep/mgrep search: symptom, files/area, library or API names>
 status: planned
 created: <YYYY-MM-DD>
 ---
@@ -89,3 +90,5 @@ The wrapper row is the one that breaks cross-harness execution: a plan whose com
 - [ ] `## Execution Log` and `## Notes` sections exist, even if empty
 - [ ] No touched file is on the security surface, or the plan accounts for it (see SKILL.md § Security Notes)
 - [ ] The user approved this plan
+- [ ] `description` is keyword-dense (symptom, files/area, library/API), not a restatement of `task`
+- [ ] A line for this plan is appended to `docs/micro/INDEX.md` at hand-off (see SKILL.md § Plan Index)

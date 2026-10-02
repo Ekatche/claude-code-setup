@@ -45,7 +45,8 @@ Tasks touching roughly 1-5 files with an outcome that is already understood: bug
 | Decision | Rule |
 |---|---|
 | Fast path or full plan? | All four fast-path boxes checked → fast path. Otherwise full plan. |
-| Where does the plan live? | `docs/micro/<YYYYMMDD>-<slug>/PLAN.md` |
+| Where does the plan live? | `docs/micro/<YYYYMMDD>-<slug>/PLAN.md` while active, `docs/micro/archive/<YYYY-MM>/` once done |
+| Has this area been touched before? | `grep -i '<keyword>' docs/micro/INDEX.md` — see Finding Past Plans |
 | How many steps? | 3-7. More → not micro, reconsider GSD. |
 | Who executes? | Fast path: this skill. Full plan: `executing-micro-plans`. |
 | When to commit? | Never automatically. |
@@ -59,6 +60,7 @@ The deliverable is one markdown file whose section headings are fixed. Do not re
 ```markdown
 ---
 task: <one-line description>
+description: <keyword-dense one-liner: what changed, in which files/area, with which technology — written for grep/mgrep search, not for a human reading the plan top to bottom>
 status: planned
 created: <YYYY-MM-DD>
 ---
@@ -108,13 +110,35 @@ created: <YYYY-MM-DD>
 
 `references/PLAN_TEMPLATE.md` is the same structure with inline guidance, ready to copy.
 
+**`status`** is exactly one of `planned`, `blocked`, `done` — never `complete` or `completed`. The archive sweep matches `done` literally.
+
+**`description`** exists for search, not for the reader. `task` is what a human sees in a listing; `description` is what a `grep`/`mgrep` query matches months later — pack in the symptom, the area touched, and any library/API name, even ones already in `task`.
+
+## Plan Index
+
+Every full plan (not fast-path tasks — those stay in `DAILY_LOG`) gets one line in `docs/micro/INDEX.md`, created with a `# Micro-dev Plan Index` header if missing:
+
+```markdown
+- [20261002-fix-metadata-keyerror](20261002-fix-metadata-keyerror/PLAN.md) — Fix KeyError on missing metadata field in the document router
+```
+
+Append the line when the plan file is created (frontmatter `status: planned`), using the folder slug and the `description` value. Link paths are relative to `docs/micro/`, where the index lives. Never rewrite existing lines when revisiting a plan — append-only, like the Execution Log. The one exception is the archive sweep, which rewrites the link path of a plan it moves; the description is never touched.
+
+The index covers every full plan, active and archived, so it is the single entry point for search. It grows by one line per plan: query it with `grep`, never read it whole.
+
 ## Plan File Location
 
 ```
-docs/micro/<YYYYMMDD>-<slug>/PLAN.md
+docs/micro/
+├── INDEX.md                         one line per full plan, active and archived
+├── DAILY_LOG-<YYYY-MM-DD>.md        fast-path log, current month only
+├── <YYYYMMDD>-<slug>/PLAN.md        active plans: planned or blocked
+└── archive/<YYYY-MM>/
+    ├── <YYYYMMDD>-<slug>/PLAN.md    done plans, bucketed by the month in their folder name
+    └── DAILY_LOG-<YYYY-MM-DD>.md    past months' logs
 ```
 
-One folder per task, one plan inside it. Always forward slashes.
+One folder per task, one plan inside it. Always forward slashes. The root holds only what is in flight; monthly buckets keep every directory small no matter how many plans accumulate.
 
 **Slug**: derive from the task description, lowercase, `[a-z0-9-]` only, max 60 chars, no `..` and no `/`. Validate against `^[a-z0-9-]{1,60}$` **before** the slug reaches any shell command.
 
@@ -125,6 +149,57 @@ mkdir -p "docs/micro/$(date +%Y%m%d)-fix-metadata-keyerror"
 ```
 
 Never execute a command that still contains a `<placeholder>`.
+
+## Archive Sweep
+
+Run at step 2 of every invocation, fast path included. It moves finished work out of the root:
+
+- a plan folder at the root whose frontmatter reads `status: done` → `archive/<YYYY-MM>/`, and its `INDEX.md` link is rewritten to the new path;
+- a `DAILY_LOG` from a month before the current one → `archive/<YYYY-MM>/`.
+
+`planned` and `blocked` plans never move. Neither does a folder whose name does not match `^[0-9]{8}-[a-z0-9-]{1,60}$` — names read from disk are sanitized before they reach a shell command. `executing-micro-plans` never moves a plan: closing a plan leaves it at the root, where the user sees it, until the next sweep.
+
+```bash
+cd docs/micro 2>/dev/null && {
+  cur="$(date +%Y-%m)"
+  for d in [0-9]*-*/; do
+    d="${d%/}"
+    printf '%s' "$d" | grep -qE '^[0-9]{8}-[a-z0-9-]{1,60}$' || continue
+    head -n 8 "$d/PLAN.md" 2>/dev/null | grep -qE '^status: *done *$' || continue
+    m="archive/$(printf '%s' "$d" | cut -c1-4)-$(printf '%s' "$d" | cut -c5-6)"
+    mkdir -p "$m"
+    git mv "$d" "$m/" 2>/dev/null || mv "$d" "$m/"
+    [ -f INDEX.md ] && sed "s#]($d/PLAN.md)#]($m/$d/PLAN.md)#" INDEX.md > INDEX.md.tmp && mv INDEX.md.tmp INDEX.md
+    echo "archived $d"
+  done
+  for f in DAILY_LOG-*.md; do
+    [ -e "$f" ] || continue
+    m="${f#DAILY_LOG-}"; m="${m%-??.md}"
+    printf '%s' "$m" | grep -qE '^[0-9]{4}-[0-9]{2}$' || continue
+    [ "$m" = "$cur" ] && continue
+    mkdir -p "archive/$m"
+    git mv "$f" "archive/$m/" 2>/dev/null || mv "$f" "archive/$m/"
+    echo "archived $f"
+  done
+  cd - >/dev/null
+}
+```
+
+Report what moved in one line. The sweep only renames files under `docs/micro/`; it is not a reason to stop in the git safety check.
+
+## Finding Past Plans
+
+Every finished plan stays searchable after archiving. Cheapest first:
+
+```bash
+grep -i '<keyword>' docs/micro/INDEX.md                          # every full plan, one line each
+grep -ril '<keyword>' docs/micro --include=PLAN.md                # full text, archive included
+grep -rh '<keyword>' docs/micro --include='DAILY_LOG-*.md'        # fast-path tasks
+```
+
+Where a semantic search tool is installed, `mgrep '<question>' docs/micro` answers "did we already fix something like this?" in one call.
+
+Use it in step 3: a past plan that touched the same files records the decisions, pitfalls and test commands that apply again. Read its `## Notes` and `## Code Review` — not the whole file.
 
 ## Fast Path
 
@@ -147,7 +222,7 @@ Any box unchecked → full plan. When genuinely unsure, take the fast path and e
 - [x] 09:42 fix-metadata-keyerror — Fix KeyError on missing metadata field (`api/routes/document_router.py`)
 ```
 
-The log is daily, which keeps the active file small and the context window clean.
+The log is daily, which keeps the active file small and the context window clean. Past months' logs move to `archive/<YYYY-MM>/` with the sweep.
 
 ## Process
 
@@ -163,9 +238,11 @@ Is the task interpretable in 2+ ways, or missing a constraint (which file, which
 
 Run `git status`. Files inside the expected Surgical Scope carrying uncommitted changes from another session, or an unexpectedly dirty tree → stop and surface it. Never stash or discard silently. A clean, understood starting state is a precondition.
 
+Then run the Archive Sweep.
+
 ### 3. Check existing code first
 
-Search before writing. **Default: semantic search, then a targeted read with a line range.** Escape hatch: for an exact string or symbol, text grep is fine; where a code graph is available, an impact query answers "who calls this" with zero file reads.
+Search past plans first (see Finding Past Plans): one `grep` on `docs/micro/INDEX.md` for the area or symptom. Then search before writing. **Default: semantic search, then a targeted read with a line range.** Escape hatch: for an exact string or symbol, text grep is fine; where a code graph is available, an impact query answers "who calls this" with zero file reads.
 
 The portable rule is the ordering — cheap and narrow before whole-file reads. Tool names are not portable: `mgrep`, `rtk`, `code-review-graph`, and `semgrep` exist only where they are installed. Assume nothing; on any harness or machine without them, native grep/glob plus targeted reads satisfy this step completely.
 
@@ -191,6 +268,8 @@ Fill these two sections completely **before writing any step and before any code
 
 A plan with an unfilled Definition of Done is incomplete and must not proceed to execution.
 
+Writing `description` here, not as an afterthought, forces it to be concrete — scope and DoD are already in front of you.
+
 **Write machine-agnostic commands.** `pnpm build`, not `rtk pnpm build`. A local wrapper inside the Definition of Done makes the plan unrunnable by the next harness — which is the whole point of the file.
 
 **Every requirement the user stated gets its own item.** A build command and a test command cover what the code does, not what the user asked for. If they said keyboard focus must stay visible, the page must work on a phone, no inline styles, French prose never in monospace, every public function documented — each of those is one item, and each is one command away from being binary:
@@ -209,7 +288,7 @@ Present the plan and get explicit approval before any execution.
 
 ### 8. Hand off
 
-Approved → confirm frontmatter reads `status: planned`, then invoke **`executing-micro-plans`** with the plan path.
+Approved → confirm frontmatter reads `status: planned`, append the plan's line to `docs/micro/INDEX.md` (see Plan Index above), then invoke **`executing-micro-plans`** with the plan path.
 
 That skill owns everything downstream: the `[~]` in-progress marker, per-step gates, the evidence rule, the Execution Log, the failure protocol, teardown, the Code Review section, and the final status. Do not re-implement any of it here — a second, divergent execution procedure is exactly what breaks cross-harness resumption.
 
@@ -278,4 +357,6 @@ where `opus` earns its cost.
 
 - `references/PLAN_TEMPLATE.md` — the plan structure with inline guidance
 - `references/EXAMPLES.md` — three worked plans: bug fix, mini-feature, one-file refactor
+- `docs/micro/INDEX.md` — one line per full plan, appended at hand-off (see Plan Index), the entry point for Finding Past Plans
+- `docs/micro/archive/<YYYY-MM>/` — done plans and past daily logs, moved by the Archive Sweep
 - `executing-micro-plans` — executes, resumes, and closes out the plans this skill writes
