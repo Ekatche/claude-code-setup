@@ -159,31 +159,33 @@ Run at step 2 of every invocation, fast path included. It moves finished work ou
 
 `planned` and `blocked` plans never move. Neither does a folder whose name does not match `^[0-9]{8}-[a-z0-9-]{1,60}$` — names read from disk are sanitized before they reach a shell command. `executing-micro-plans` never moves a plan: closing a plan leaves it at the root, where the user sees it, until the next sweep.
 
+The sweep runs in two stages: a read-only listing, then one explicit command per item. Never fold the moves into a loop — a script that loops over `mv` and rewrites files with `sed` gets refused by permission classifiers, and redoing it by hand costs more than the two stages. Most invocations find nothing to move, and the listing alone then costs one call.
+
+**Stage 1 — list (read-only).** Prints one line per item to move, nothing otherwise:
+
 ```bash
-cd docs/micro 2>/dev/null && {
-  cur="$(date +%Y-%m)"
-  for d in [0-9]*-*/; do
-    d="${d%/}"
-    printf '%s' "$d" | grep -qE '^[0-9]{8}-[a-z0-9-]{1,60}$' || continue
-    head -n 8 "$d/PLAN.md" 2>/dev/null | grep -qE '^status: *done *$' || continue
-    m="archive/$(printf '%s' "$d" | cut -c1-4)-$(printf '%s' "$d" | cut -c5-6)"
-    mkdir -p "$m"
-    git mv "$d" "$m/" 2>/dev/null || mv "$d" "$m/"
-    [ -f INDEX.md ] && sed "s#]($d/PLAN.md)#]($m/$d/PLAN.md)#" INDEX.md > INDEX.md.tmp && mv INDEX.md.tmp INDEX.md
-    echo "archived $d"
-  done
-  for f in DAILY_LOG-*.md; do
-    [ -e "$f" ] || continue
-    m="${f#DAILY_LOG-}"; m="${m%-??.md}"
-    printf '%s' "$m" | grep -qE '^[0-9]{4}-[0-9]{2}$' || continue
-    [ "$m" = "$cur" ] && continue
-    mkdir -p "archive/$m"
-    git mv "$f" "archive/$m/" 2>/dev/null || mv "$f" "archive/$m/"
-    echo "archived $f"
-  done
-  cd - >/dev/null
-}
+cur="$(date +%Y-%m)"
+for d in docs/micro/[0-9]*-*/; do
+  d="${d%/}"; n="${d#docs/micro/}"
+  printf '%s' "$n" | grep -qE '^[0-9]{8}-[a-z0-9-]{1,60}$' || continue
+  head -n 8 "$d/PLAN.md" 2>/dev/null | grep -qE '^status: *done *$' || continue
+  echo "plan $n archive/$(printf '%s' "$n" | cut -c1-4)-$(printf '%s' "$n" | cut -c5-6)"
+done
+for f in docs/micro/DAILY_LOG-*.md; do
+  [ -e "$f" ] || continue
+  n="${f#docs/micro/}"; m="${n#DAILY_LOG-}"; m="${m%-??.md}"
+  printf '%s' "$m" | grep -qE '^[0-9]{4}-[0-9]{2}$' || continue
+  [ "$m" = "$cur" ] || echo "log $n archive/$m"
+done
 ```
+
+**Stage 2 — move, one command per listed line**, with the real values substituted. For `plan 20260905-fix-currency-format archive/2026-09`:
+
+```bash
+mkdir -p docs/micro/archive/2026-09 && git mv docs/micro/20260905-fix-currency-format docs/micro/archive/2026-09/
+```
+
+Use plain `mv` when the path is not tracked by git. For a `plan` line, then rewrite its `INDEX.md` link with the Edit tool — `](20260905-fix-currency-format/PLAN.md)` becomes `](archive/2026-09/20260905-fix-currency-format/PLAN.md)`; only the path changes, never the description. A `log` line needs only the move.
 
 Report what moved in one line. The sweep only renames files under `docs/micro/`; it is not a reason to stop in the git safety check.
 
