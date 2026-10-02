@@ -176,6 +176,8 @@ Run at step 2 of every invocation, fast path included. It moves finished work ou
 
 The sweep runs in two stages: a read-only listing, then one explicit command per item. Never fold the moves into a loop — a script that loops over `mv` and rewrites files with `sed` gets refused by permission classifiers, and redoing it by hand costs more than the two stages. Most invocations find nothing to move, and the listing alone then costs one call.
 
+Where the `micro-archive-sweep.sh` SessionStart hook is installed (Claude Code on this machine), the same sweep already ran at session start and resume, and said so in one line if it moved anything. Still run Stage 1: it catches a plan closed earlier in this session. Stage 2 is then needed only for what Stage 1 lists.
+
 **Stage 1 — list (read-only).** Prints one line per item to move, nothing otherwise:
 
 ```bash
@@ -353,7 +355,9 @@ are the token-expensive part of planning. On this machine they are also gated:
   the follow-up `rtk grep -i '<keyword>' docs/micro/INDEX.md` is not refused.
   A raw `grep` as the first search of the turn is. The mgrep store does not
   follow moves: after a sweep moved something, use `mgrep search -s` (sync
-  first), or a hit may name a pre-archive path. The folder slug survives the
+  first), or a hit may name a pre-archive path. The SessionStart hook already
+  launches that sync in the background after its own moves; a Stage 2 move
+  made during the session needs it by hand. The folder slug survives the
   move — when a hit does not exist on disk, `rtk grep '<slug>'
   docs/micro/INDEX.md` gives its current path.
 - **Project with a code graph** (`code-review-graph` tools present — the

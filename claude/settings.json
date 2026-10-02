@@ -179,6 +179,16 @@
             "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/post-compact-pointers.sh\""
           }
         ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/micro-archive-sweep.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
