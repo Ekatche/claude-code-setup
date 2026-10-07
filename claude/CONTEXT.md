@@ -113,6 +113,7 @@ le meilleur moteur » mais « la tâche est-elle *répondre à une question* ou
 | Besoin | Outil |
 |---|---|
 | Doc d'une lib / SDK / CLI / framework | Context7 (`resolve-library-id` → `query-docs`) — meilleur sur la compétence : versionné et autoritatif, pas seulement gratuit |
+| ↳ absente de Context7 (lib, version, modèle ou endpoint trop récent) | `mgrep --web` puis fetch de la doc officielle (changelog compris) + endpoint de métadonnées du fournisseur s'il existe. Jamais déduire un paramètre par essai/erreur ou d'une version antérieure |
 | Question web générale | `mgrep --web '<question>'` — **1er choix** |
 | ↳ quota Mixedbread épuisé | `WebSearch` |
 | Rapport sourcé, synthèse multi-sources avec citations (30-120 s) | `tvly research '<sujet>'` — seul capable |
